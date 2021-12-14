@@ -27,12 +27,24 @@ export class FirebaseAuthStrategy
     return admin.auth().createUser(options);
   }
 
-  delete(options: Partial<CreateRequest>): Promise<void> {
+  async delete(
+    options: Partial<CreateRequest>,
+  ): Promise<Partial<CreateRequest> | null> {
     if (!('uid' in options)) {
       throw new TypeError('Requires user UID to delete.');
     }
-
-    return admin.auth().deleteUser(options.uid);
+    try {
+      await admin.auth().deleteUser(options.uid);
+      return {
+        uid: options.uid,
+        email: options.email,
+        displayName: options.displayName,
+        phoneNumber: options.phoneNumber,
+        photoURL: options.photoURL,
+      };
+    } catch (e) {
+      return null;
+    }
   }
 
   async login(options: CreateRequest): Promise<string> {
