@@ -1,18 +1,8 @@
 import { CACHE_MANAGER, Inject, Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { Cache } from 'cache-manager';
-import {
-  asapScheduler,
-  map,
-  Observable,
-  of,
-  scheduled,
-  switchMap,
-  tap,
-} from 'rxjs';
+import { map, Observable, tap } from 'rxjs';
 import { LoginResponse } from './interfaces/login-response.interface';
-import { TokenPayload } from './interfaces/token-payload.interface';
-import { DateTime } from 'luxon';
 import { AccountInfoResponse } from './interfaces/account-info-response.interface';
 import { NetworkResponse } from './interfaces/network-response.interface';
 import { NetworkStatusResponse } from './interfaces/network-status-response.interface';
@@ -73,29 +63,32 @@ export class OrayApiService {
   }
 
   public getToken(username: string, password: string): Observable<string> {
-    const $lastToken = scheduled(this.cache.get(username), asapScheduler);
-    return $lastToken.pipe(
-      switchMap((lastTokenStr: string) => {
-        if (!lastTokenStr) {
-          return this.login(username, password).pipe(
-            map((response) => response.token),
-          );
-        }
-        const lastToken: LoginResponse = JSON.parse(lastTokenStr);
-        const b64TokenPayload = lastToken.token.split('.')[1];
-        const tokenPayload: TokenPayload = JSON.parse(
-          Buffer.from(b64TokenPayload, 'base64').toString(),
-        );
-
-        if (DateTime.fromSeconds(tokenPayload.exp) < DateTime.now()) {
-          return this.login(username, password).pipe(
-            map((response) => response.token),
-          );
-        }
-
-        return of(lastToken.token);
-      }),
+    return this.login(username, password).pipe(
+      map((response) => response.token),
     );
+    // const $lastToken = scheduled(this.cache.get(username), asapScheduler);
+    // return $lastToken.pipe(
+    //   switchMap((lastTokenStr: string) => {
+    //     if (!lastTokenStr) {
+    //       return this.login(username, password).pipe(
+    //         map((response) => response.token),
+    //       );
+    //     }
+    //     const lastToken: LoginResponse = JSON.parse(lastTokenStr);
+    //     const b64TokenPayload = lastToken.token.split('.')[1];
+    //     const tokenPayload: TokenPayload = JSON.parse(
+    //       Buffer.from(b64TokenPayload, 'base64').toString(),
+    //     );
+    //
+    //     if (DateTime.fromSeconds(tokenPayload.exp) < DateTime.now()) {
+    //       return this.login(username, password).pipe(
+    //         map((response) => response.token),
+    //       );
+    //     }
+    //
+    //     return of(lastToken.token);
+    //   }),
+    // );
   }
 
   public getAccountInfo(token: string): Observable<AccountInfoResponse> {
