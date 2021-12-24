@@ -1,7 +1,6 @@
-import { CACHE_MANAGER, Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
-import { Cache } from 'cache-manager';
-import { map, Observable, tap } from 'rxjs';
+import {map, Observable, tap} from 'rxjs';
 import { LoginResponse } from './interfaces/login-response.interface';
 import { AccountInfoResponse } from './interfaces/account-info-response.interface';
 import { NetworkResponse } from './interfaces/network-response.interface';
@@ -20,10 +19,7 @@ export class OrayApiService {
   private readonly AUTH_API_SERVER = 'https://auth-v2.oray.com/';
   private readonly PGY_API_SERVER = 'https://pgy-api.oray.com/';
 
-  constructor(
-    private http: HttpService,
-    @Inject(CACHE_MANAGER) private cache: Cache,
-  ) {}
+  constructor(private http: HttpService) {}
 
   public login(username: string, password: string): Observable<LoginResponse> {
     return this.http
@@ -38,10 +34,7 @@ export class OrayApiService {
           baseURL: this.USER_API_SERVER,
         },
       )
-      .pipe(
-        map((response) => response.data),
-        tap((response) => this.cache.set(username, JSON.stringify(response))),
-      );
+      .pipe(map((response) => response.data));
   }
 
   public refreshToken(
@@ -65,6 +58,7 @@ export class OrayApiService {
   public getToken(username: string, password: string): Observable<string> {
     return this.login(username, password).pipe(
       map((response) => response.token),
+      tap(r => console.log(r)),
     );
     // const $lastToken = scheduled(this.cache.get(username), asapScheduler);
     // return $lastToken.pipe(
